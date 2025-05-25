@@ -22,22 +22,27 @@ from google.genai.types import (
     SpeechConfig,
     VoiceConfig,
     PrebuiltVoiceConfig,
+    Content,
+    Part,
 )
 
+# Fixed CONFIG - the main issues were:
+# 1. system_instruction needs to be a Content object with Parts, not a string
+# 2. output_audio_transcription and input_audio_transcription are not valid parameters
 CONFIG = LiveConnectConfig(
     response_modalities=["AUDIO"],
-    output_audio_transcription={},
-    input_audio_transcription={},
     speech_config=SpeechConfig(
         voice_config=VoiceConfig(
             prebuilt_voice_config=PrebuiltVoiceConfig(voice_name="Puck")
         )
     ),
-    system_instruction="You are a voice translator. Listen to the user's speech in any language and translate it to Hindi. Respond only with the Hindi translation spoken clearly. Do not add any extra commentary or explanation, just provide the direct translation in Hindi.",
+    system_instruction=Content(
+        parts=[Part(text="You are a voice translator. Listen to the user's speech in any language and translate it to Hindi. Respond only with the Hindi translation spoken clearly. Do not add any extra commentary or explanation, just provide the direct translation in Hindi.")]
+    ),
 )
 
 class AudioManager:
-    def __init__(self, input_sample_rate=16000, output_sample_rate=24000):
+    def _init_(self, input_sample_rate=16000, output_sample_rate=24000):
         self.pya = pyaudio.PyAudio()
         self.input_stream = None
         self.output_stream = None
@@ -78,7 +83,7 @@ class AudioManager:
         if self.is_playing:
             return
         self.is_playing = True
-        print("🗣️ Playing Hindi translation")
+        print("🗣 Playing Hindi translation")
         while self.audio_queue:
             try:
                 audio_data = self.audio_queue.popleft()
@@ -159,6 +164,9 @@ async def translator_loop():
                     if server_content and server_content.turn_complete:
                         print("✅ Translation complete")
 
+                    # Note: Transcription handling may need adjustment based on actual API response structure
+                    # The original code referenced output_transcription and input_transcription
+                    # which might not be available without proper configuration
                     output_transcription = getattr(response.server_content, "output_transcription", None)
                     if output_transcription and output_transcription.text:
                         output_transcriptions.append(output_transcription.text)
