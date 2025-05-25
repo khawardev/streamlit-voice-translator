@@ -1,0 +1,10 @@
+flask==2.3.3
+flask-socketio==5.3.6
+google-genai==0.3.0
+asyncio
+google-cloud-aiplatform 
+google-generativeai
+pyaudio
+numpy
+soundfile
+streamlit
